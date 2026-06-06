@@ -13,6 +13,7 @@ struct PACOTE
     bool uvcAtivo;
     int angulo;
     String alertas;
+    bool temRisco;
 } dados;
 
 #include "alertas_espec.h"
@@ -132,7 +133,9 @@ void RECEBE()
         dados.irrigando = doc["irr"] | false;
         dados.uvcAtivo = doc["uvc"] | false;
         dados.angulo = doc["angulo"] | 0;
-        dados.alertas = gerarAlertasEspeciais(dados.temperatura, dados.umidade);
+        auto resultado = gerarAlertasEspeciais(dados.temperatura, dados.umidade, dados.luz);
+        dados.alertas = resultado.texto;
+        dados.temRisco = resultado.temRisco;
 
         // Salvar JSON a cada intervalo definido
         if (millis() - ultimoSalvamentoJSON >= INTERVALO_SALVAMENTO_MS)

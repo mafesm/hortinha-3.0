@@ -117,11 +117,9 @@ Arduino Mega  ←── UART (Serial1 / Serial2) ──→  ESP32
 - Envia `UVC:1` / `UVC:0` via UART para o Arduino
 
 ### `alertas_espec.h`
-- Detecta risco de patógenos fúngicos com base em temperatura e umidade:
-  - **Botrytis cinerea** (12–20°C, UR > 80%)
-  - **Bremia lactucae** (12–20°C, alta umidade)
-  - **Pythium spp.** (18–30°C, alta umidade)
-  - **Cercospora spp.** (UR > 80%)
+- Detecta risco de patógenos fúngicos com base em temperatura, umidade e luz
+- Retorna `ResultadoAlertas` com `texto` de alertas e `temRisco`
+- Usa `temRiscoAmbiental()` como wrapper para obter apenas o bool sem recalcular
 
 ### `persistencia.h` / `persistencia.cpp`
 - Armazena leituras em arquivos CSV diários em `/data/YYYYMMDD.csv`

@@ -1,9 +1,5 @@
 @startuml Hortinha 3.0
 
-' Forçar saída em A4 retrato e resolução adequada para impressão
-page A4 portrait
-skinparam dpi 300
-
 title Hortinha 3.0 — Diagrama de Componentes
 
 skinparam componentStyle rectangle

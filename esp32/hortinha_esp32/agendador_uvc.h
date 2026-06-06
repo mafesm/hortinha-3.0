@@ -11,8 +11,7 @@ bool condicoesAptasParaCicloUVC()
 {
     if (dados.modoManual)
         return false;
-
-    return temRiscoAmbiental(dados.temperatura, dados.umidade);
+    return dados.temRisco;
 }
 
 void iniciarAgendadorUVC()
