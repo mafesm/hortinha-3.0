@@ -1,54 +1,250 @@
-@startuml project_architecture
-' Projeto Hortinha 3.0 - Arquitetura de Componentes
+@startuml Hortinha 3.0
 
-package "Arduino Uno/Mega" {
-  [Arduino Main] as ArduinoMain
-  [Sensores] as Sensores
-  [Modos] as Modos
-  [Bomba NFT] as BombaNFT
-  [UVC Local] as UVC
-  [LED RGB] as LedRGB
-  [Alertas Locais] as AlertasLocais
-  [Protocolo Serial Arduino] as SerialProtoArduino
+' Forçar saída em A4 retrato e resolução adequada para impressão
+page A4 portrait
+skinparam dpi 300
+
+title Hortinha 3.0 — Diagrama de Componentes
+
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam titleFontSize 16
+skinparam titleFontStyle bold
+skinparam linetype ortho
+
+skinparam package {
+  BackgroundColor #E1F5EE
+  BorderColor     #0F6E56
+  FontColor       #085041
+  FontStyle       bold
 }
 
+skinparam component {
+  BackgroundColor #E6F1FB
+  BorderColor     #185FA5
+  FontColor       #0C447C
+}
+
+skinparam interface {
+  BackgroundColor #FAEEDA
+  BorderColor     #854F0B
+}
+
+' Ajustes para notas em links (cores e compactas)
+skinparam note {
+  BackgroundColor #FFF2D6
+  BorderColor #CFA33B
+  FontColor #5A4500
+}
+skinparam noteFontSize 10
+skinparam notePadding 6
+skinparam noteFontName Arial
+
+
+' ─────────────────────────────────────────
+'  ARDUINO MEGA
+' ─────────────────────────────────────────
+package "Arduino Mega" {
+
+  [sensores.h\nDHT11 · LDR · PIR · fotoperíodo]      as SENS
+  [modos.h\nDIP switch · manual / bomba / UVC]         as MODOS
+  [bomba_nft.h\nServo · válvula NFT · ciclo auto]      as BOMBA
+  [uvc.h\nLED UVC · trava por presença]                as UVC_ARD
+  [led.h\nLED RGB · indicador de estado]               as LED
+  [alertas_local.h\nTemp · umid · luz · fotoperíodo]   as ALRT_ARD
+  [serial_proto.h\nEnvia JSON · recebe comandos UART]  as PROTO_ARD
+
+  ' dependências internas Arduino
+  SENS      --> ALRT_ARD
+  note on link
+    fornece leituras
+  end note
+  SENS      --> PROTO_ARD
+  note on link
+    fornece leituras
+  end note
+  MODOS     --> BOMBA
+  note on link
+    modoManual / modoBomba
+  end note
+  MODOS     --> UVC_ARD
+  note on link
+    uvcSolicitado
+  end note
+  BOMBA     --> LED
+  note on link
+    irrigando
+  end note
+  UVC_ARD   --> LED
+  note on link
+    uvcAtivo
+  end note
+  MODOS     --> LED
+  note on link
+    modoManual
+  end note
+  ALRT_ARD  --> PROTO_ARD
+  note on link
+    enviarNotificacao()
+  end note
+  PROTO_ARD --> BOMBA
+  note on link
+    fecharIrrigacao()
+  end note
+  PROTO_ARD --> UVC_ARD
+  note on link
+    uvcSolicitado
+  end note
+}
+
+' ─────────────────────────────────────────
+'  ESP32
+' ─────────────────────────────────────────
 package "ESP32" {
-  [ESP32 Main] as ESP32Main
-  [Servidor Web] as WebServer
-  [Painel HTML] as Dashboard
-  [Persistência] as Persistencia
-  [Agendador UVC] as AgendadorUVC
-  [Alertas Especiais] as AlertasEspeciais
-  [Protocolo Serial ESP32] as SerialProtoESP32
+
+  [serial_proto.h\nParseia JSON · struct PACOTE]       as PROTO_ESP
+  [agendador_uvc.h\nCiclo UVC · bloqueio por presença] as AGEND_UVC
+  [alertas_espec.h\nBotrytis · Bremia · Pythium]       as ALRT_ESP
+  [persistencia.h/.cpp\nLittleFS · CSV diário]         as PERSIST
+  [servidorweb.h\n/ · /getData · /listarArquivos]      as WEBSERV
+  [dashboard.h\nHTML · LED virtual · alertas]           as DASH
+
+  ' dependências internas ESP32
+  PROTO_ESP   --> AGEND_UVC
+  note on link
+    dados (temp, umid, presença)
+  end note
+  PROTO_ESP   --> ALRT_ESP
+  note on link
+    temperatura · umidade
+  end note
+  PROTO_ESP   --> PERSIST
+  note on link
+    escreverLeituraJSON()
+  end note
+  ALRT_ESP    --> PROTO_ESP
+  note on link
+    dados.alertas
+  end note
+  WEBSERV     --> PROTO_ESP
+  note on link
+    gerarJsonDados()
+  end note
+  WEBSERV     --> PERSIST
+  note on link
+    listar / baixar arquivos
+  end note
+  DASH        --> WEBSERV
+  note on link
+    rota "/"
+  end note
 }
 
-[Arduino Main] --> [Sensores]
-[Arduino Main] --> [Modos]
-[Arduino Main] --> [Bomba NFT]
-[Arduino Main] --> [UVC Local]
-[Arduino Main] --> [LED RGB]
-[Arduino Main] --> [Alertas Locais]
-[Arduino Main] --> [Protocolo Serial Arduino]
+' ─────────────────────────────────────────
+'  CANAL UART (Serial1 ↔ Serial2, 9600 bps)
+' ─────────────────────────────────────────
+interface "UART\n9600 bps" as UART
 
-[ESP32 Main] --> [Servidor Web]
-[ESP32 Main] --> [Painel HTML]
-[ESP32 Main] --> [Persistência]
-[ESP32 Main] --> [Agendador UVC]
-[ESP32 Main] --> [Alertas Especiais]
-[ESP32 Main] --> [Protocolo Serial ESP32]
+PROTO_ARD  --> UART
+note on link
+  JSON telemetria (1 s)
+  NOTIF:<tipo>
+end note
+UART       --> PROTO_ESP
+note on link
+  recebe JSON / NOTIF
+end note
+PROTO_ESP  --> UART
+note on link
+  UVC:1/0
+end note
+UART       --> PROTO_ARD
+note on link
+  recebe comandos
+end note
 
-[Protocolo Serial Arduino] --> [Protocolo Serial ESP32] : UART JSON
-[Servidor Web] --> [Painel HTML] : HTTP / (GET /getData /listarArquivos /baixarArquivo)
-[Servidor Web] --> [Persistência] : grava / lê arquivos CSV
-[Agendador UVC] --> [Protocolo Serial ESP32] : comando UVC + monitoramento
+' ─────────────────────────────────────────s
+'  HARDWARE FÍSICO — Arduino
+' ─────────────────────────────────────────
+package "Hardware — Arduino" {
+  [DHT11\npino 10]          as HW_DHT
+  [LDR\npino A0]            as HW_LDR
+  [PIR\npino 9]             as HW_PIR
+  [Servo Motor\npino 8]     as HW_SERVO
+  [LED UVC\npino 3]         as HW_UVC
+  [LED RGB\npinos 11·12·13] as HW_RGB
+  [DIP Switch\npinos 4–7]   as HW_DIP
+}
 
-database "LittleFS / CSV" as LittleFS
-[Persistência] --> LittleFS
+SENS      --> HW_DHT
+note on link
+  dht.readTemperature/Humidity()
+end note
+SENS      --> HW_LDR
+note on link
+  analogRead(A0)
+end note
+SENS      --> HW_PIR
+note on link
+  digitalRead(9)
+end note
+BOMBA     --> HW_SERVO
+note on link
+  valvula.write(angulo)
+end note
+UVC_ARD   --> HW_UVC
+note on link
+  digitalWrite(3, HIGH/LOW)
+end note
+LED       --> HW_RGB
+note on link
+  analogWrite(R/G/B)
+end note
+MODOS     --> HW_DIP
+note on link
+  digitalRead(DIP1..4)
+end note
 
-node "Browser" as Browser
-[Dashboard] --> Browser : renderiza + atualiza via fetch
-Browser --> [Servidor Web] : GET /getData
-Browser --> [Servidor Web] : GET /listarArquivos
-Browser --> [Servidor Web] : GET /baixarArquivo
+' ─────────────────────────────────────────
+'  HARDWARE / INFRA — ESP32
+' ─────────────────────────────────────────
+package "Hardware / Infra — ESP32" {
+  [Wi-Fi\nHTTP porta 80]              as HW_WIFI
+  [LittleFS\n/data/YYYYMMDD.csv]      as HW_FS
+  [NTP\npool.ntp.org · UTC-3]         as HW_NTP
+}
+
+WEBSERV   --> HW_WIFI
+note on link
+  server.begin() / handleClient()
+end note
+PERSIST   --> HW_FS
+note on link
+  LittleFS.open / write / remove
+end note
+PROTO_ESP --> HW_NTP
+note on link
+  time(nullptr) para timestamp
+end note
+
+' ─────────────────────────────────────────
+'  SKETCHES PRINCIPAIS (entry points)
+' ─────────────────────────────────────────
+[hortinha_main.ino\nsetup() · loop()] as MAIN_ARD
+[hortinha_esp32.ino\nsetup() · loop()] as MAIN_ESP
+
+MAIN_ARD --> SENS
+MAIN_ARD --> MODOS
+MAIN_ARD --> BOMBA
+MAIN_ARD --> UVC_ARD
+MAIN_ARD --> LED
+MAIN_ARD --> ALRT_ARD
+MAIN_ARD --> PROTO_ARD
+
+MAIN_ESP --> PROTO_ESP
+MAIN_ESP --> AGEND_UVC
+MAIN_ESP --> PERSIST
+MAIN_ESP --> WEBSERV
 
 @enduml

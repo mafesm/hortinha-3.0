@@ -57,8 +57,6 @@ bool escreverLeituraJSON(time_t timestamp, const String &jsonString)
     Serial.print("[DEBUG] file ok: ");
     Serial.println(f ? "SIM" : "NAO");
 
-    String nome = nomeDoArquivoParaData(timestamp);
-
     garantirDiretorioData();
 
     // Verifica se arquivo existe para adicionar cabeçalho se necessário

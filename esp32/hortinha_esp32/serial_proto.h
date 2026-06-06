@@ -17,7 +17,6 @@ struct PACOTE
 
 #include "alertas_espec.h"
 
-bool modoNoturno = false;
 unsigned long ultimoSalvamentoJSON = 0;
 const unsigned long INTERVALO_SALVAMENTO_MS = 20000; // Salva a cada 20 segundos
 
@@ -60,7 +59,6 @@ String gerarJsonDados()
     doc["modoManual"] = dados.modoManual;
     doc["irrigando"] = dados.irrigando;
     doc["uvcAtivo"] = dados.uvcAtivo;
-    doc["modoNoturno"] = modoNoturno;
     doc["angulo"] = dados.angulo;
     doc["alertas"] = dados.alertas;
 
