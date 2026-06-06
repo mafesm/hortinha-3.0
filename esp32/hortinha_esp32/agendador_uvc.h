@@ -1,0 +1,68 @@
+#pragma once
+
+const unsigned long UVC_CHECK_INTERVAL_MS = 10000; // Verifica a cada 10 segundos se as condições para iniciar um ciclo de UVC estão atendidas
+const unsigned long UVC_CYCLE_DURATION_MS = 15000; // Duração de cada ciclo de UVC (15 segundos)
+
+unsigned long ultimoTickUVC = 0;
+unsigned long inicioCicloUVC = 0;
+bool janelaUVCAtiva = false;
+
+bool condicoesAptasParaCicloUVC()
+{
+    if (dados.modoManual)
+        return false;
+
+    return temRiscoAmbiental(dados.temperatura, dados.umidade);
+}
+
+void iniciarAgendadorUVC()
+{
+    ultimoTickUVC = millis();
+    inicioCicloUVC = 0;
+    janelaUVCAtiva = false;
+}
+
+void iniciarCicloUVC()
+{
+    ENVIA("UVC:1");
+    janelaUVCAtiva = true;
+    inicioCicloUVC = millis();
+    Serial.println("[UVC] Ciclo agendado");
+}
+
+void finalizarCicloUVC()
+{
+    ENVIA("UVC:0");
+    janelaUVCAtiva = false;
+    inicioCicloUVC = 0;
+    Serial.println("[UVC] Ciclo finalizado");
+}
+
+void atualizarAgendadorUVC()
+{
+    if (millis() - ultimoTickUVC < UVC_CHECK_INTERVAL_MS)
+        return;
+
+    ultimoTickUVC = millis();
+
+    if (!janelaUVCAtiva)
+    {
+        if (condicoesAptasParaCicloUVC())
+        {
+            iniciarCicloUVC();
+        }
+        return;
+    }
+
+    if (dados.presenca && janelaUVCAtiva)
+    {
+        Serial.println("[UVC] Presença detectada, interrompendo ciclo");
+        finalizarCicloUVC();
+        return;
+    }
+
+    if (millis() - inicioCicloUVC >= UVC_CYCLE_DURATION_MS)
+    {
+        finalizarCicloUVC();
+    }
+}

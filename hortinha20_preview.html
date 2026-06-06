@@ -1,0 +1,248 @@
+﻿<!DOCTYPE html>
+<html lang='pt-BR'>
+
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Hortinha 3.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 1s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            transition: color 0.5s ease;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .sensor-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .sensor-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .sensor-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .led-indicator {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 20px auto;
+            box-shadow: 0 0 20px;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        input[type='range'] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-top: 10px;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='container'>
+        <h1> 🌱 Hortinha 3.0 </h1>
+        <div id='alerts'></div>
+        <div class='grid'>
+            <div class='card'>
+                <h2>📊 Sensores Ambientais</h2>
+                <div class='sensor-item'><span class='sensor-label'>🌡️ Temperatura</span><span class='sensor-value'
+                        id='temp'>--°C</span></div>
+                <div class='sensor-item'><span class='sensor-label'>💧 Umidade</span><span class='sensor-value'
+                        id='umid'>--%</span></div>
+                <div class='sensor-item'><span class='sensor-label'>☀️ Luminosidade</span><span class='sensor-value'
+                        id='luz'>--</span></div>
+                <div class='sensor-item'><span class='sensor-label'>👤 Presença</span><span class='sensor-value'
+                        id='pres'>--</span></div>
+                <div class='sensor-item'><span class='sensor-label'>UVC</span><span class='sensor-value'
+                        id='uvc'>--</span></div>
+            </div>
+            <div class='card'>
+                <h2>⚙️ Estado do Sistema</h2>
+                <div style='text-align: center;'>
+                    <div id='led' class='led-indicator' style='background: gray;'></div>
+                    <p id='ledStatus' style='font-size: 1.2em; font-weight: 600;'>Sistema Iniciando...</p>
+                </div>
+                <div class='sensor-item'><span class='sensor-label'>Modo</span><span class='sensor-value'
+                        id='modo'>--</span></div>
+                <div class='sensor-item'><span class='sensor-label'>Irrigação</span><span class='sensor-value'
+                        id='irr'>--</span></div>
+                <div class='sensor-item'><span class='sensor-label'>Ângulo Servo</span><span class='sensor-value'
+                        id='angulo'>--°</span></div>
+            </div>
+            <div class='card'>
+                <h2>💧 Controle de Água</h2>
+                <div class='sensor-item' style='margin-top: 20px;'><span class='sensor-label'>Status Água</span><span
+                        class='sensor-value' id='agua'>--</span></div>
+            </div>
+            <div class='card'>
+                <h2>📁 Relatórios CSV</h2>
+                <div id='fileList'>
+                    <p>Carregando arquivos...</p>
+                </div>
+            </div>
+            <div></div>
+            <script>
+                function baixarArquivo(nomeArquivo) {
+                    window.location.href = '/baixarArquivo?File=' + encodeURIComponent(nomeArquivo);
+                }
+                function atualizarArquivos() {
+                    fetch('/listarArquivos').then(r => r.json()).then(files => {
+                        var fileList = document.getElementById('fileList');
+                        if (!files || files.length === 0) { fileList.innerHTML = '<p>Nenhum arquivo disponível.</p>'; return; }
+                        fileList.innerHTML = '';
+                        files.forEach(function (File) {
+                            fileList.innerHTML += `<div class='sensor-item'><span class='sensor-label'>${File}</span><button style='padding:8px 12px;' onclick=\"baixarArquivo('${File}')\">Baixar</button></div>`;
+                        });
+                    }).catch(function () {
+                        document.getElementById('fileList').innerHTML = '<p>Erro ao carregar arquivos.</p>';
+                    });
+                }
+                function atualizar() {
+                    fetch('/getData').then(r => r.json()).then(d => {
+                        document.getElementById('temp').textContent = d.temperatura + '°C';
+                        document.getElementById('umid').textContent = d.umidade + '%';
+                        document.getElementById('luz').textContent = d.luz;
+                        document.getElementById('pres').textContent = d.presenca ? '✅ Detectada' : '❌ Ausente';
+                        document.getElementById('uvc').textContent = d.uvcAtivo ? '🟣 Ativa' : '⚪ Inativa';
+                        document.getElementById('modo').textContent = d.modoManual ? '🔧 Manual' : '🤖 Automático';
+                        document.getElementById('irr').textContent = d.irrigando ? '💦 Ativa' : '⏸️ Inativa';
+                        document.getElementById('angulo').textContent = d.angulo + '°';
+                        var body = document.body;
+                        var titulo = document.querySelector('h1');
+                        if (d.modoNoturno) {
+                            body.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+                            titulo.innerHTML = '🌙 Hortinha 3.0 - Modo Noturno';
+                            titulo.style.color = '#ecf0f1';
+                        } else {
+                            body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                            titulo.innerHTML = '🌱 Hortinha 3.0 - Monitoramento';
+                            titulo.style.color = 'white';
+                        }
+                        var led = document.getElementById('led');
+                        var status = document.getElementById('ledStatus');
+                        if (d.modoManual) { led.style.background = 'orange'; status.textContent = '🔧 Modo Manual'; }
+                        else if (d.uvcAtivo) { led.style.background = '#7d3cff'; status.textContent = '🟣 UVC ativa'; }
+                        else if (d.irrigando) { led.style.background = 'blue'; status.textContent = '💦 Irrigando (' + d.angulo + '°)'; }
+                        else { led.style.background = 'green'; status.textContent = '✅ Sistema OK'; }
+                        var alerts = document.getElementById('alerts');
+                        alerts.innerHTML = '';
+                        if (d.temperatura > 35) alerts.innerHTML += \"<div class='alert alert-warning'>🌡️ Temperatura alta!</div>\
+    if(d.umidade < 30) alerts.innerHTML += \"<div class='alert alert-warning'>💧 Umidade baixa!</div>\
+    if(d.alertas && d.alertas.length > 0) alerts.innerHTML += \"<div class='alert alert-warning'>🦠 \" + d.alertas + \"</div>\
+    if(d.modoNoturno) {
+                        alerts.innerHTML += \"<div class='alert' style='background:#34495e;color:#ecf0f1;border-left:4px solid #95a5a6'>🌙 Modo Noturno Ativo</div>\
+    }
+                        atualizarArquivos();
+                    });
+                }
+                setInterval(function () { atualizar(); atualizarArquivos(); }, 2000);
+                atualizar();
+                atualizarArquivos();
+            </script>
+</body>
+
+</html>

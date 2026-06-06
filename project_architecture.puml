@@ -1,0 +1,54 @@
+@startuml project_architecture
+' Projeto Hortinha 3.0 - Arquitetura de Componentes
+
+package "Arduino Uno/Mega" {
+  [Arduino Main] as ArduinoMain
+  [Sensores] as Sensores
+  [Modos] as Modos
+  [Bomba NFT] as BombaNFT
+  [UVC Local] as UVC
+  [LED RGB] as LedRGB
+  [Alertas Locais] as AlertasLocais
+  [Protocolo Serial Arduino] as SerialProtoArduino
+}
+
+package "ESP32" {
+  [ESP32 Main] as ESP32Main
+  [Servidor Web] as WebServer
+  [Painel HTML] as Dashboard
+  [Persistência] as Persistencia
+  [Agendador UVC] as AgendadorUVC
+  [Alertas Especiais] as AlertasEspeciais
+  [Protocolo Serial ESP32] as SerialProtoESP32
+}
+
+[Arduino Main] --> [Sensores]
+[Arduino Main] --> [Modos]
+[Arduino Main] --> [Bomba NFT]
+[Arduino Main] --> [UVC Local]
+[Arduino Main] --> [LED RGB]
+[Arduino Main] --> [Alertas Locais]
+[Arduino Main] --> [Protocolo Serial Arduino]
+
+[ESP32 Main] --> [Servidor Web]
+[ESP32 Main] --> [Painel HTML]
+[ESP32 Main] --> [Persistência]
+[ESP32 Main] --> [Agendador UVC]
+[ESP32 Main] --> [Alertas Especiais]
+[ESP32 Main] --> [Protocolo Serial ESP32]
+
+[Protocolo Serial Arduino] --> [Protocolo Serial ESP32] : UART JSON
+[Servidor Web] --> [Painel HTML] : HTTP / (GET /getData /listarArquivos /baixarArquivo)
+[Servidor Web] --> [Persistência] : grava / lê arquivos CSV
+[Agendador UVC] --> [Protocolo Serial ESP32] : comando UVC + monitoramento
+
+database "LittleFS / CSV" as LittleFS
+[Persistência] --> LittleFS
+
+node "Browser" as Browser
+[Dashboard] --> Browser : renderiza + atualiza via fetch
+Browser --> [Servidor Web] : GET /getData
+Browser --> [Servidor Web] : GET /listarArquivos
+Browser --> [Servidor Web] : GET /baixarArquivo
+
+@enduml
