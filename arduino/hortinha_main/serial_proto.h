@@ -117,13 +117,14 @@ void processarComandoUART()
     }
     else if (comando == "UVC:1")
     {
+        //Serial.println("[UART] uvc solicitado")
         uvcSolicitado = true;
-        Serial1.println("[UART] UVC solicitado");
+        Serial.println("[UART] UVC solicitado");
     }
     else if (comando == "UVC:0")
     {
         uvcSolicitado = false;
-        Serial1.println("[UART] UVC desligado");
+        Serial.println("[UART] UVC desligado");
     }
     else
     {

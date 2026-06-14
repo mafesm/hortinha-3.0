@@ -4,8 +4,8 @@
 
 extern bool presenca;
 
-bool uvcAtivo = false;
-bool uvcSolicitado = false;
+bool uvcAtivo;
+bool uvcSolicitado;
 
 led uvc;
 
@@ -13,45 +13,36 @@ led uvc;
 
 void travaUVC();
 
-void iniciarUVCLocal()
-{
-    uvc.pin = UVC_PIN;
-    uvc.luz = 0;
-    uvc.pisc = false;
-    uvc.ult_p = 0;
+void iniciarUVCLocal() {
+  uvc.pin = UVC_PIN;
+  uvc.luz = 0;
+  uvc.pisc = false;
+  uvc.ult_p = 0;
 
+  uvcAtivo = false;
+  uvcSolicitado = false;
+
+  pinMode(uvc.pin, OUTPUT);
+  digitalWrite(uvc.pin, LOW);
+  Serial.println("[UVC] LED UVC iniciado");
+}
+
+void attUVC() {
+    //Serial.println("att uvc");
+  travaUVC();
+  if (uvcAtivo) {
+    digitalWrite(uvc.pin, HIGH);
+    Serial.println("UVC ligado");
+  } else digitalWrite(uvc.pin, LOW);
+}
+
+void travaUVC() {
+  if (uvcSolicitado && presenca) {
     uvcAtivo = false;
     uvcSolicitado = false;
-
-    pinMode(uvc.pin, OUTPUT);
-    digitalWrite(uvc.pin, LOW);
-    Serial.println("[UVC] LED UVC iniciado");
-}
-
-void attUVC()
-{
-    travaUVC();
-    if (modoManual && uvcSolicitado)
-    {
-        digitalWrite(uvc.pin, HIGH);
-        return;
-    }
-    if (uvcAtivo)
-    {
-        digitalWrite(uvc.pin, HIGH);
-    }
-}
-
-void travaUVC()
-{
-    if (uvcSolicitado && presenca)
-    {
-        uvcAtivo = false;
-        uvcSolicitado = false;
-        Serial.println("[UVC] Presença detectada - UVC bloqueado");
-    }
-    else
-    {
-        uvcAtivo = uvcSolicitado;
-    }
+    Serial.println("[UVC] Presença detectada - UVC bloqueado");
+  } else {
+    uvcAtivo = uvcSolicitado;
+    //Serial.println(uvcAtivo);
+  }
 }

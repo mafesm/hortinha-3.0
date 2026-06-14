@@ -1,0 +1,146 @@
+@startuml Hortinha_Arquitetura_Geral
+
+top to bottom direction
+skinparam dpi 150
+skinparam pageMargin 15
+skinparam pageExternalColor white
+
+title Arquitetura Geral
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam titleFontSize 18
+skinparam titleFontStyle bold
+skinparam linetype ortho
+
+skinparam package {
+  BackgroundColor #E1F5EE
+  BorderColor     #0F6E56
+  FontColor       #085041
+  FontStyle       bold
+  FontSize        14
+}
+
+skinparam component {
+  BackgroundColor #E6F1FB
+  BorderColor     #185FA5
+  FontColor       #0C447C
+  FontSize        13
+}
+
+skinparam interface {
+  BackgroundColor #FAEEDA
+  BorderColor     #854F0B
+  FontColor       #5A3B00
+  FontSize        13
+}
+
+skinparam note {
+  BackgroundColor #FFF2D6
+  BorderColor     #CFA33B
+  FontColor       #5A4500
+  FontSize        12
+}
+
+' ─────────────────────────────────────────
+'  SKETCHES — entry points
+' ─────────────────────────────────────────
+[hortinha_main.ino\nsetup() · loop()] as MAIN_ARD
+[hortinha_esp32.ino\nsetup() · loop()] as MAIN_ESP
+
+' ─────────────────────────────────────────
+'  ARDUINO MEGA
+' ─────────────────────────────────────────
+package "Arduino Mega" {
+  [Sensores\nDHT11 · LDR · PIR]          as SENS
+  [Atuadores\nServo · LED UVC · LED RGB]  as ATUA
+  [Lógica\nModos · Alertas · Fotoperíodo] as LOGIC
+  [serial_proto.h\nUART TX/RX]           as PROTO_ARD
+}
+
+' ─────────────────────────────────────────
+'  CANAL UART
+' ─────────────────────────────────────────
+interface "UART\nSerial1 ↔ Serial2\n9600 bps" as UART
+
+' ─────────────────────────────────────────
+'  ESP32
+' ─────────────────────────────────────────
+package "ESP32" {
+  [serial_proto.h\nUART TX/RX · struct PACOTE] as PROTO_ESP
+  [Agendador UVC\nciclo automático]             as AGEND
+  [Alertas Especiais\n doenças fantasias] as ALRT
+  [Persistência\nLittleFS · CSV diário]         as PERSIST
+  [Servidor Web\nHTTP porta 80]                 as WEB
+}
+
+' ─────────────────────────────────────────
+'  INFRA ESP32
+' ─────────────────────────────────────────
+package "Infra — ESP32" {
+  [Wi-Fi]                            as WIFI
+  [LittleFS\n/data/YYYYMMDD.csv]     as FS
+  [NTP\nUTC-3 Brasília]              as NTP
+}
+
+' ─────────────────────────────────────────
+'  HARDWARE ARDUINO
+' ─────────────────────────────────────────
+package "Hardware — Arduino" {
+  [DHT11 · LDR · PIR\nServo · LED UVC · LED RGB · DIP Switch] as HW_ARD
+}
+
+' ─────────────────────────────────────────
+'  RELAÇÕES
+' ─────────────────────────────────────────
+MAIN_ARD -down-> SENS
+MAIN_ARD -down-> ATUA
+MAIN_ARD -down-> LOGIC
+MAIN_ARD -down-> PROTO_ARD
+
+SENS  -down-> LOGIC
+LOGIC -down-> ATUA
+LOGIC -down-> PROTO_ARD
+
+PROTO_ARD -down-> UART
+note on link
+  JSON cada 1 s
+  NOTIF:<TEMP|UMID|LUZ|PRES|FOTO>
+end note
+
+UART -down-> PROTO_ARD
+note on link
+  UVC:1/0 
+end note
+
+UART -down-> PROTO_ESP
+note on link
+  recebe JSON + notificações
+end note
+
+PROTO_ESP -down-> UART
+note on link
+  envia comandos ao Arduino
+end note
+
+MAIN_ESP -down-> PROTO_ESP
+MAIN_ESP -down-> AGEND
+MAIN_ESP -down-> PERSIST
+MAIN_ESP -down-> WEB
+
+PROTO_ESP -down-> AGEND
+PROTO_ESP -down-> ALRT
+PROTO_ESP -down-> PERSIST
+ALRT      -down-> PROTO_ESP
+WEB       -down-> PROTO_ESP
+WEB       -down-> PERSIST
+
+WEB     -down-> WIFI
+PERSIST -down-> FS
+PROTO_ESP -down-> NTP
+
+SENS  -down-> HW_ARD
+ATUA  -down-> HW_ARD
+LOGIC -down-> HW_ARD
+
+@enduml

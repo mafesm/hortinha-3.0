@@ -154,8 +154,6 @@ Arduino Mega  ←── UART (Serial1 / Serial2) ──→  ESP32
 |---|---|---|
 | Arduino → ESP32 | `{"temp":25.0,"umid":65.0,...}` | Telemetria a cada 1 s |
 | Arduino → ESP32 | `NOTIF:TEMP` | Notificação de alerta |
-| ESP32 → Arduino | `CHUVA:75` | Probabilidade de chuva (%) |
-| ESP32 → Arduino | `GEADA:1` | Alerta de geada |
 | ESP32 → Arduino | `UVC:1` | Ativar UVC |
 | ESP32 → Arduino | `UVC:0` | Desativar UVC |
 

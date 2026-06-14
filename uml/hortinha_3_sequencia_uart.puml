@@ -1,0 +1,96 @@
+@startuml Hortinha_Sequencia_UART
+
+skinparam dpi 150
+skinparam pageMargin 15
+skinparam pageExternalColor white
+
+title Fluxo de Comunicação UART
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam titleFontSize 18
+skinparam titleFontStyle bold
+skinparam sequenceMessageAlign center
+
+skinparam participant {
+  BackgroundColor #D9E2A8
+  BorderColor     #5E3B4D
+  FontColor       #4B2B30
+  FontSize        13
+}
+
+skinparam note {
+  BackgroundColor #AA96B7
+  BorderColor     #4B2B30
+  FontColor       #FFFFFF
+  FontSize        12
+}
+
+skinparam sequence {
+  ArrowColor          #5E3B4D
+  ArrowFontColor      #4B2B30
+  ArrowFontSize       12
+  LifeLineBorderColor #5E3B4D
+  GroupBackgroundColor #D9E2A8
+  GroupBorderColor     #5E3B4D
+  GroupFontColor       #4B2B30
+  GroupFontSize        13
+  DividerBackgroundColor #D9E2A8
+  DividerBorderColor     #5E3B4D
+  DividerFontColor       #4B2B30
+  DividerFontSize        13
+}
+
+participant "sensores.h\n(Arduino)" as SENS
+participant "alertas_local.h\n(Arduino)" as ALRT_ARD
+participant "serial_proto.h\n(Arduino)" as PROTO_ARD
+participant "serial_proto.h\n(ESP32)" as PROTO_ESP
+participant "agendador_uvc.h\n(ESP32)" as AGEND
+participant "alertas_espec.h\n(ESP32)" as ALRT_ESP
+participant "persistencia\n(ESP32)" as PERSIST
+participant "servidorweb.h\n(ESP32)" as WEB
+
+== Loop principal — a cada 1 segundo ==
+
+SENS -> PROTO_ARD : temperatura · umidade\nluz · presença
+PROTO_ARD -> PROTO_ESP : JSON\n{"temp":..,"umid":..,"luz":..,"pres":..,"irr":..,"uvc":..}
+
+PROTO_ESP -> AGEND    : dados atualizados
+PROTO_ESP -> ALRT_ESP : temperatura · umidade
+ALRT_ESP  -> PROTO_ESP : dados.alertas\n(Botrytis · Bremia · Pythium)
+
+== A cada 20 segundos — persistência ==
+
+PROTO_ESP -> PERSIST : escreverLeituraJSON(timestamp, json)
+note right
+  Salvo em
+  /data/YYYYMMDD.csv
+end note
+
+== Alertas locais — Arduino ==
+
+SENS -> ALRT_ARD : leituras contínuas
+ALRT_ARD -> PROTO_ARD : enviarNotificacao("TEMP"|"UMID"|"LUZ"|"PRES"|"FOTO")
+PROTO_ARD -> PROTO_ESP : NOTIF:<tipo>
+note right
+  Dispara pisca
+  no LED RGB
+end note
+
+== Agendador UVC — a cada 10 segundos ==
+
+AGEND -> AGEND : condicoesAptasParaCicloUVC()\numidade > 80%
+AGEND -> PROTO_ARD : UVC:1
+note right
+  Ciclo de 15 s
+  Bloqueado se presença
+end note
+AGEND -> PROTO_ARD : UVC:0
+
+== Requisição web — usuário ==
+
+WEB -> PROTO_ESP : gerarJsonDados()
+PROTO_ESP -> WEB : JSON completo\n(temp · umid · luz · alertas · modo · ...)
+WEB -> PERSIST : listarArquivos() / baixarArquivo()
+
+@enduml

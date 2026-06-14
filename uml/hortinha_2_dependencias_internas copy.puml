@@ -1,0 +1,84 @@
+@startuml Hortinha_Dependencias_Internas
+
+top to bottom direction
+skinparam dpi 150
+skinparam pageMargin 15
+skinparam pageExternalColor white
+
+title Dependências Internas dos Módulos
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam titleFontSize 18
+skinparam titleFontStyle bold
+skinparam linetype ortho
+
+skinparam package {
+  BackgroundColor #E1F5EE
+  BorderColor     #0F6E56
+  FontColor       #085041
+  FontStyle       bold
+  FontSize        14
+}
+
+skinparam component {
+  BackgroundColor #E6F1FB
+  BorderColor     #185FA5
+  FontColor       #0C447C
+  FontSize        13
+}
+
+skinparam note {
+  BackgroundColor #FFF2D6
+  BorderColor     #CFA33B
+  FontColor       #5A4500
+  FontSize        12
+}
+
+' ─────────────────────────────────────────
+'  ARDUINO MEGA — módulos internos
+' ─────────────────────────────────────────
+package "Arduino Mega" {
+
+  [sensores.h\nDHT11 · LDR · PIR\nfotoperíodo]       as SENS
+  [modos.h\nDIP switch\nmanual / bomba / UVC]          as MODOS
+  [bomba_nft.h\nServo · válvula NFT\nciclo automático] as BOMBA
+  [uvc.h\nLED UVC\ntrava por presença]                 as UVC_ARD
+  [led.h\nLED RGB\nindicador de estado]                as LED
+  [alertas_local.h\nTemp · Umid · Luz\nFotoperíodo · Presença] as ALRT_ARD
+  [serial_proto.h\nEnvia JSON\nrecebe comandos]        as PROTO_ARD
+}
+
+SENS     -down-> ALRT_ARD   : fornece leituras
+SENS     -down-> PROTO_ARD  : fornece leituras
+MODOS    -right-> BOMBA     : modoManual\nmodoBomba
+MODOS    -right-> UVC_ARD   : uvcSolicitado
+MODOS    -down-> LED        : modoManual
+BOMBA    -down-> LED        : irrigando
+UVC_ARD  -down-> LED        : uvcAtivo
+ALRT_ARD -down-> PROTO_ARD  : enviarNotificacao()
+PROTO_ARD -up-> BOMBA       : fecharIrrigacao()
+PROTO_ARD -up-> UVC_ARD     : uvcSolicitado
+
+' ─────────────────────────────────────────
+'  HARDWARE — Arduino (colunas)
+' ─────────────────────────────────────────
+package "Hardware — Arduino" {
+  [DHT11\npino 10]          as HW_DHT
+  [LDR\npino A0]            as HW_LDR
+  [PIR\npino 9]             as HW_PIR
+  [Servo Motor\npino 8]     as HW_SERVO
+  [LED UVC\npino 3]         as HW_UVC
+  [LED RGB\npinos 11·12·13] as HW_RGB
+  [DIP Switch\npinos 4–7]   as HW_DIP
+}
+
+SENS      -down-> HW_DHT   : readTemperature\nreadHumidity
+SENS      -down-> HW_LDR   : analogRead(A0)
+SENS      -down-> HW_PIR   : digitalRead(9)
+BOMBA     -down-> HW_SERVO : valvula.write(angulo)
+UVC_ARD   -down-> HW_UVC  : digitalWrite HIGH/LOW
+LED       -down-> HW_RGB   : analogWrite R/G/B
+MODOS     -down-> HW_DIP   : digitalRead DIP1..4
+
+@enduml

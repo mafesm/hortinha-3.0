@@ -14,6 +14,7 @@ bool prevModoManual = false;
 bool prevModoBombaLiga = false;
 bool prevModoBombaDesliga = false;
 bool prevuvcSolicitado = false;
+bool prevUvcMode = false;
 
 void iniciarModos()
 {
@@ -37,7 +38,14 @@ void lerModos()
     modoManual = dip1 && !dip2 && !dip3 && !dip4;
     modoBombaLiga = dip1 && dip2 && !dip3 && !dip4;
     modoBombaDesliga = dip1 && !dip2 && dip3 && !dip4;
-    uvcSolicitado = dip1 && !dip2 && !dip3 && dip4;
+    bool uvcMode = dip1 && !dip2 && !dip3 && dip4;
+
+    // Gerar um pulso único em uvcSolicitado apenas na borda de subida do modo UVC.
+    if (uvcMode && !prevUvcMode)
+    {
+        uvcSolicitado = true;
+    }
+    prevUvcMode = uvcMode;
 
     if (modoManual != prevModoManual)
     {

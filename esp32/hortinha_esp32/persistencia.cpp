@@ -60,9 +60,6 @@ bool escreverLeituraJSON(time_t timestamp, const String &jsonString)
     garantirDiretorioData();
 
     // Verifica se arquivo existe para adicionar cabeçalho se necessário
-
-    bool isNewFile = !LittleFS.exists(nome);
-    File f = LittleFS.open(nome, FILE_APPEND);
     if (!f)
     {
         Serial.println("[PERSIST] Erro ao abrir arquivo para escrita");

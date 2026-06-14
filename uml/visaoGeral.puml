@@ -1,13 +1,18 @@
 @startuml Hortinha 3.0
 
-title Hortinha 3.0 — Diagrama de Componentes
+top to bottom direction
+skinparam pageMargin 10
+skinparam dpi 150
+skinparam pageExternalColor white
+
+title Diagrama de Componentes
 
 skinparam componentStyle rectangle
 skinparam defaultFontName Arial
 skinparam defaultFontSize 12
 skinparam titleFontSize 16
 skinparam titleFontStyle bold
-skinparam linetype ortho
+skinparam linetype orthogonal
 
 skinparam package {
   BackgroundColor #E1F5EE
@@ -106,7 +111,7 @@ package "ESP32" {
   [servidorweb.h\n/ · /getData · /listarArquivos]      as WEBSERV
   [dashboard.h\nHTML · LED virtual · alertas]           as DASH
 
-  ' dependências internas ESP32
+  ' dependências internas ESP32'
   PROTO_ESP   --> AGEND_UVC
   note on link
     dados (temp, umid, presença)
@@ -142,6 +147,11 @@ package "ESP32" {
 ' ─────────────────────────────────────────
 interface "UART\n9600 bps" as UART
 
+"Arduino Mega" -down-> UART
+UART -down-> "ESP32"
+"ESP32" -down-> "Hardware / Infra — ESP32"
+"Arduino Mega" -down-> "Hardware — Arduino"
+
 PROTO_ARD  --> UART
 note on link
   JSON telemetria (1 s)
@@ -160,7 +170,7 @@ note on link
   recebe comandos
 end note
 
-' ─────────────────────────────────────────s
+' ─────────────────────────────────────────
 '  HARDWARE FÍSICO — Arduino
 ' ─────────────────────────────────────────
 package "Hardware — Arduino" {
