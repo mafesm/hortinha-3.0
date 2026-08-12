@@ -6,11 +6,13 @@
 const char* ssid = "mafe_sm";
 const char* password = "png_sol24";
 
-#include "servidorweb.h" 
-#include "serial_proto.h"
-#include "dashboard.h"
-#include "agendador_uvc.h"
-#include "persistencia.h"
+// ===== Headers =====
+#include "include/persistencia.h"
+#include "include/alertas_espec.h"
+#include "include/serial_proto.h"
+#include "include/agendador_uvc.h"
+#include "include/dashboard.h"
+#include "include/servidorweb.h"
 
 void setup() {
   Serial.begin(115200);                                    
@@ -57,7 +59,7 @@ void setup() {
 }
 
 void loop() {
-  server.handleClient();
+  processarWebServer();
   RECEBE();
   
   atualizarAgendadorUVC();

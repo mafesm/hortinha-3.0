@@ -1,4 +1,4 @@
-#pragma once
+#include "../include/dashboard.h"
 
 String SendHTML()
 {

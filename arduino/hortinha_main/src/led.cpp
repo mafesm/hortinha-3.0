@@ -1,26 +1,9 @@
-#pragma once
+#include "../include/led.h"
+#include "../include/modos.h"
+#include "../include/bomba_nft.h"
+#include "../include/uvc.h"
 
-struct led
-{
-    int luz;
-    int pin;
-    bool pisc;
-    unsigned long ult_p;
-};
-
-struct ledRGB
-{
-    led R;
-    led G;
-    led B;
-    int est;
-};
-
-extern bool modoManual;
-extern bool irrigando;
-extern bool uvcAtivo;
-
-ledRGB rgb;
+static ledRGB rgb = {};
 
 void STAR(int pinR, int pinG, int pinB)
 {
@@ -45,6 +28,8 @@ void STAR(int pinR, int pinG, int pinB)
     pinMode(rgb.R.pin, OUTPUT);
     pinMode(rgb.G.pin, OUTPUT);
     pinMode(rgb.B.pin, OUTPUT);
+
+    Serial.println("[LED] RGB iniciado");
 }
 
 void COR(int r, int g, int b)
@@ -58,7 +43,7 @@ void COR(int r, int g, int b)
     analogWrite(rgb.B.pin, b);
 }
 
-void PISCA_COR(int r, int g, int b, int vezes = 3)
+void PISCA_COR(int r, int g, int b, int vezes)
 {
     for (int i = 0; i < vezes; i++)
     {
@@ -76,7 +61,6 @@ void GEN_RGB()
         if (uvcAtivo)
         {
             COR(255, 0, 255);
-            //  Serial.println("[LED] Modo Manual + UVC Ativo - Magenta");
             return;
         }
         COR(255, 165, 0);
@@ -87,17 +71,14 @@ void GEN_RGB()
     if (uvcAtivo)
     {
         COR(125, 0, 255);
-        //  Serial.println("[LED] UVC Ativo - Roxo");
         return;
     }
 
     if (irrigando)
     {
         COR(0, 0, 255);
-        // Serial.println("[LED] Irrigando - Azul");
         return;
     }
 
     COR(0, 255, 0);
-    // Serial.println("[LED] Sistema Normal - Verde");
 }

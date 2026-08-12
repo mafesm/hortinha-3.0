@@ -1,7 +1,7 @@
-#pragma once
-
+#include "../include/sensores.h"
 #include <DHT.h>
 
+// Configuração dos sensores
 #define DHTPIN 10
 #define DHTTYPE DHT11
 #define LDR_PIN A0
@@ -9,14 +9,17 @@
 
 DHT dht(DHTPIN, DHTTYPE);
 
+// Variáveis globais
 float temperatura = 0.0;
 float umidade = 0.0;
 int luz = 0;
 bool presenca = false;
 
+// Controle de filtragem LDR
 unsigned long ultimoLeituraLuz = 0;
 int luzFiltrada = 0;
 
+// Controle de fotoperíodo
 unsigned long tempoLuzAcumuladoMs = 0;
 unsigned long ultimoTickFotoperiodo = 0;
 unsigned long ultimoResetFotoperiodo = 0;
@@ -30,7 +33,7 @@ void iniciarSensores()
     pinMode(LDR_PIN, INPUT);
     pinMode(PIR_PIN, INPUT);
 
-    Serial.println("Sensores iniciados.");
+    Serial.println("[SENS] Sensores iniciados");
 }
 
 void lerSensores()
@@ -39,7 +42,7 @@ void lerSensores()
     umidade = dht.readHumidity();
     presenca = digitalRead(PIR_PIN);
 
-    if (millis() - ultimoLeituraLuz >= 1000) // Atualiza a leitura da luz a cada 1segundos
+    if (millis() - ultimoLeituraLuz >= 1000) // Atualiza a cada 1 segundo
     {
         ultimoLeituraLuz = millis();
         int leituraAtual = analogRead(LDR_PIN);
@@ -47,6 +50,7 @@ void lerSensores()
         luz = luzFiltrada;
     }
 
+    // Validação de leituras
     if (isnan(temperatura))
         temperatura = 0.0;
     if (isnan(umidade))
@@ -65,7 +69,7 @@ void iniciarFotoperiodo()
 void atualizarFotoperiodo()
 {
     unsigned long agora = millis();
-    if (agora - ultimoTickFotoperiodo < 1000) // Atualiza a cada 1 segundos
+    if (agora - ultimoTickFotoperiodo < 1000) // Atualiza a cada 1 segundo
         return;
 
     unsigned long delta = agora - ultimoTickFotoperiodo;
@@ -77,6 +81,7 @@ void atualizarFotoperiodo()
         tempoLuzAcumuladoMs += delta;
     }
 
+    // Reset diário
     const unsigned long DIA_MS = 86400000UL;
     if (agora - ultimoResetFotoperiodo >= DIA_MS)
     {

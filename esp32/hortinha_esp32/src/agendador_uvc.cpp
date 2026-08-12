@@ -1,8 +1,11 @@
-#pragma once
+#include "../include/agendador_uvc.h"
+#include "../include/serial_proto.h"
 
-const unsigned long UVC_CHECK_INTERVAL_MS = 10000; // Verifica a cada 10 segundos se as condições para iniciar um ciclo de UVC estão atendidas
-const unsigned long UVC_CYCLE_DURATION_MS = 15000; // Duração de cada ciclo de UVC (15 segundos)
+// Timings configuráveis
+const unsigned long UVC_CHECK_INTERVAL_MS = 10000; // Verifica a cada 10 segundos
+const unsigned long UVC_CYCLE_DURATION_MS = 15000; // Duração de cada ciclo (15 segundos)
 
+// Estados do agendador
 unsigned long ultimoTickUVC = 0;
 unsigned long inicioCicloUVC = 0;
 bool janelaUVCAtiva = false;

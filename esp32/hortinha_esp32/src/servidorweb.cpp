@@ -1,24 +1,23 @@
-#pragma once
-
+#include "../include/servidorweb.h"
+#include "../include/serial_proto.h"
+#include "../include/dashboard.h"
 #include <WebServer.h>
 #include <LittleFS.h>
-#include "serial_proto.h"
-#include "dashboard.h"
 
-WebServer server(80);
+static WebServer server(80);
 
-void handleRoot()
+static void handleRoot()
 {
     server.send(200, "text/html", SendHTML());
 }
 
-void handleGetData()
+static void handleGetData()
 {
     String response = gerarJsonDados();
     server.send(200, "application/json", response);
 }
 
-void handleListarArquivos()
+static void handleListarArquivos()
 {
     String response = "[";
     File dir = LittleFS.open("/data");
@@ -45,7 +44,7 @@ void handleListarArquivos()
     server.send(200, "application/json", response);
 }
 
-void handleBaixarArquivo()
+static void handleBaixarArquivo()
 {
     if (!server.hasArg("file"))
     {
@@ -79,4 +78,10 @@ void iniciarWebServer()
     server.on("/listarArquivos", handleListarArquivos);
     server.on("/baixarArquivo", handleBaixarArquivo);
     server.begin();
+    Serial.println("[WEB] Servidor iniciado na porta 80");
+}
+
+void processarWebServer()
+{
+    server.handleClient();
 }

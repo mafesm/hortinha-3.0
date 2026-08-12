@@ -1,10 +1,4 @@
-#pragma once
-
-struct ResultadoAlertas
-{
-    String texto;
-    bool temRisco; // usado por agendador_uvc.h
-};
+#include "../include/alertas_espec.h"
 
 ResultadoAlertas gerarAlertasEspeciais(float temperatura, float umidade, int luz)
 {
@@ -69,7 +63,6 @@ ResultadoAlertas gerarAlertasEspeciais(float temperatura, float umidade, int luz
     return {alertas, risco};
 }
 
-// Wrapper para quem só precisa do bool — zero cálculo duplicado
 bool temRiscoAmbiental(float temperatura, float umidade, int luz)
 {
     return gerarAlertasEspeciais(temperatura, umidade, luz).temRisco;

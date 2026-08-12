@@ -1,10 +1,10 @@
-#include "sensores.h"
-#include "bomba_nft.h"
-#include "uvc.h"
-#include "modos.h"
-#include "led.h"
-#include "serial_proto.h"
-#include "alertas_local.h"
+#include "include/sensores.h"
+#include "include/bomba_nft.h"
+#include "include/uvc.h"
+#include "include/modos.h"
+#include "include/led.h"
+#include "include/serial_proto.h"
+#include "include/alertas_local.h"
 
 void setup() {
   

@@ -1,27 +1,14 @@
-#pragma once
-#include <ArduinoJson.h>
-#include "persistencia.h"
+#include "../include/serial_proto.h"
+#include "../include/persistencia.h"
+#include "../include/alertas_espec.h"
 
-struct PACOTE
-{
-    float temperatura;
-    float umidade;
-    int luz;
-    bool presenca;
-    bool modoManual;
-    bool irrigando;
-    bool uvcAtivo;
-    int angulo;
-    String alertas;
-    bool temRisco;
-} dados;
+// Instância global da estrutura de dados
+PACOTE dados = {};
 
-#include "alertas_espec.h"
-
+// Controle de salvamento periódico
 unsigned long ultimoSalvamentoJSON = 0;
 const unsigned long INTERVALO_SALVAMENTO_MS = 20000; // Salva a cada 20 segundos
 
-// Processa notificações recebidas do Arduino
 void GEN_NOTF(String tipo)
 {
     Serial.print("[NOTIF] Arduino: ");

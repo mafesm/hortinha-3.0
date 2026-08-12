@@ -1,35 +1,24 @@
-#pragma once
+#include "../include/bomba_nft.h"
+#include "../include/modos.h"
+#include "../include/sensores.h"
 
-#include <Servo.h>
+// Hardware
+#define SERVO_PIN 8
+static Servo valvula;
 
-extern bool modoBombaLiga;
-extern bool modoBombaDesliga;
-extern bool modoManual;
-extern bool presenca;
-extern float umidade;
-extern int luz;
-
+// Estados e timings
 bool irrigando = false;
 int anguloAtual = 0;
-int direcao = 1;
-unsigned long ultimoMovimento = 0;
+static int direcao = 1;
+static unsigned long ultimoMovimento = 0;
 const int VELOCIDADE_BASE = 30;
-#define SERVO_PIN 8
-Servo valvula;
 
-const unsigned long BOMBA_CHECK_INTERVAL_MS = 10000; // Verifica a cada 10 segundos se as condições para iniciar um ciclo de irrigação estão atendidas
-const unsigned long BOMBA_CYCLE_DURATION_MS = 15000; // Duração de cada ciclo de irrigação (15 segundos)
-unsigned long ultimoTickBomba = 0;
-unsigned long inicioCicloBomba = 0;
-bool janelaBombaAtiva = false;
+const unsigned long BOMBA_CHECK_INTERVAL_MS = 10000; // Verifica a cada 10 segundos
+const unsigned long BOMBA_CYCLE_DURATION_MS = 15000; // Duração ciclo: 15 segundos
 
-void abrirIrrigacao();
-void fecharIrrigacao();
-void iniciarAgendadorBomba();
-bool condicoesAptasParaCicloBomba();
-void iniciarCicloBomba();
-void finalizarCicloBomba();
-void atualizarAgendadorBomba();
+static unsigned long ultimoTickBomba = 0;
+static unsigned long inicioCicloBomba = 0;
+static bool janelaBombaAtiva = false;
 
 void iniciarBombaNFT()
 {
@@ -112,7 +101,7 @@ void finalizarCicloBomba()
     Serial.println("[IRR] Ciclo finalizado");
 }
 
-void atualizarAgendadorBomba()
+static void atualizarAgendadorBomba()
 {
     if (millis() - ultimoTickBomba < BOMBA_CHECK_INTERVAL_MS)
         return;
