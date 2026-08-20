@@ -3,8 +3,8 @@
 #define TX_PIN 17 // tx 2
 
 #include <WiFi.h>
-const char* ssid = "mafe_sm";
-const char* password = "png_sol24";
+const char* ssid = "";
+const char* password = "";
 
 #include "servidorweb.h" 
 #include "serial_proto.h"
