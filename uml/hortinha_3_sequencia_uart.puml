@@ -4,10 +4,10 @@ skinparam dpi 150
 skinparam pageMargin 15
 skinparam pageExternalColor white
 
-title Fluxo de Comunicação UART
+title Fluxo de Comunicação e Dados
 
 skinparam defaultFontName Arial
-skinparam defaultFontSize 13
+skinparam defaultFontSize 12
 skinparam titleFontSize 18
 skinparam titleFontStyle bold
 skinparam sequenceMessageAlign center
@@ -42,55 +42,76 @@ skinparam sequence {
 }
 
 participant "sensores.h\n(Arduino)" as SENS
+participant "modos.h\n(Arduino)" as MODOS
+participant "uvc.h\n(Arduino)" as UVC_ARD
 participant "alertas_local.h\n(Arduino)" as ALRT_ARD
 participant "serial_proto.h\n(Arduino)" as PROTO_ARD
 participant "serial_proto.h\n(ESP32)" as PROTO_ESP
-participant "agendador_uvc.h\n(ESP32)" as AGEND
 participant "alertas_espec.h\n(ESP32)" as ALRT_ESP
+participant "agendador_uvc.h\n(ESP32)" as AGEND
 participant "persistencia\n(ESP32)" as PERSIST
 participant "servidorweb.h\n(ESP32)" as WEB
 
-== Loop principal — a cada 1 segundo ==
+== Loop principal — telemetria a cada 1 segundo ==
 
 SENS -> PROTO_ARD : temperatura · umidade\nluz · presença
-PROTO_ARD -> PROTO_ESP : JSON\n{"temp":..,"umid":..,"luz":..,"pres":..,"irr":..,"uvc":..}
+PROTO_ARD -> PROTO_ESP : JSON\n{"temp","umid","luz","pres",\n"manual","irr","uvc","angulo"}
 
-PROTO_ESP -> AGEND    : dados atualizados
-PROTO_ESP -> ALRT_ESP : temperatura · umidade
-ALRT_ESP  -> PROTO_ESP : dados.alertas\n(Botrytis · Bremia · Pythium)
+== Geração de alertas especiais — ESP32 ==
 
-== A cada 20 segundos — persistência ==
+PROTO_ESP -> ALRT_ESP : gerarAlertasEspeciais(temp, umid, luz)
+ALRT_ESP -> ALRT_ESP : avalia faixas reais\n(Botrytis · Bremia · Pythium · Cercospora)\n+ faixas fictícias [FANTASIA]
+ALRT_ESP -> PROTO_ESP : ResultadoAlertas\n{ texto, temRisco }
+note right
+  dados.alertas e dados.temRisco
+  são recalculados a cada
+  pacote UART recebido
+end note
+
+== Persistência — a cada 20 segundos ==
 
 PROTO_ESP -> PERSIST : escreverLeituraJSON(timestamp, json)
 note right
-  Salvo em
-  /data/YYYYMMDD.csv
+  Salvo em /data/YYYYMMDD.csv
+  json = gerarJsonDados()
 end note
 
 == Alertas locais — Arduino ==
 
-SENS -> ALRT_ARD : leituras contínuas
-ALRT_ARD -> PROTO_ARD : enviarNotificacao("TEMP"|"UMID"|"LUZ"|"PRES"|"FOTO")
-PROTO_ARD -> PROTO_ESP : NOTIF:<tipo>
+SENS -> ALRT_ARD : leituras contínuas\n(com histerese)
+ALRT_ARD -> PROTO_ARD : enviarNotificacao(tipo)
+PROTO_ARD -> PROTO_ESP : NOTIF:<TEMP|UMID|LUZ|PRES|FOTO>
 note right
-  Dispara pisca
-  no LED RGB
+  Dispara PISCA_COR()
+  no LED RGB local
 end note
+PROTO_ESP -> PROTO_ESP : GEN_NOTF(tipo)\n(log local)
 
-== Agendador UVC — a cada 10 segundos ==
+== Solicitação manual de UVC — chave DIP (Arduino) ==
 
-AGEND -> AGEND : condicoesAptasParaCicloUVC()\numidade > 80%
+MODOS -> MODOS : lerModos()\ndetecta borda de subida\nno modo UVC (DIP1,!2,!3,4)
+MODOS -> UVC_ARD : uvcSolicitado = true\n(pulso único na borda)
+UVC_ARD -> UVC_ARD : travaUVC()\nse presença: bloqueia\ne zera uvcSolicitado
+UVC_ARD -> UVC_ARD : uvcAtivo = uvcSolicitado\ndigitalWrite(UVC_PIN, HIGH/LOW)
+
+== Agendador UVC automático — a cada 10 segundos (ESP32) ==
+
+PROTO_ESP -> AGEND : dados.temRisco\ndados.modoManual\ndados.presenca
+AGEND -> AGEND : condicoesAptasParaCicloUVC()\n= !modoManual && temRisco
 AGEND -> PROTO_ARD : UVC:1
 note right
   Ciclo de 15 s
-  Bloqueado se presença
+  interrompido se
+  dados.presenca = true
 end note
+PROTO_ARD -> UVC_ARD : uvcSolicitado = true
 AGEND -> PROTO_ARD : UVC:0
+PROTO_ARD -> UVC_ARD : uvcSolicitado = false
 
 == Requisição web — usuário ==
 
 WEB -> PROTO_ESP : gerarJsonDados()
-PROTO_ESP -> WEB : JSON completo\n(temp · umid · luz · alertas · modo · ...)
+PROTO_ESP -> WEB : JSON completo\n(temp · umid · luz · presença\nalertas · temRisco · modo\nirr · uvc · angulo)
 WEB -> PERSIST : listarArquivos() / baixarArquivo()
 
 @enduml
